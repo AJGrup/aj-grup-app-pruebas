@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#f4f2ec">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AJ Finances">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- iOS usa apple-touch-icon al «añadir a inicio»; ignora el manifest para el icono -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icono-192.png">
+<title>AJ Finances</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   App AJ Grup · port 1:1 de la serie de mocks (00-cimientos → 08-cuadre)
+
+   Los valores no se reinterpretan: son los del mock. Lo que sí entra son las
+   correcciones vinculantes anotadas al final de cada brief, que forman parte
+   de la especificación tanto como el dibujo.
+   ═══════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  /* Sistema V15 · Suizo + calidez: papel cálido, navy de marca ancla, filetes. */
+  --canvas:#faf9f5; --papel:#f4f2ec; --sup:#fff; --navy:#192571;
+  --borde:#e8e5dd; --filete:#ddd9cf; --sep:#e8e5dd; --boton:#d6d1c5;
+  --tinta:#17181f; --suave:#787570; --tenue:#a09b91; --raya:#c8c3b6;
+  --accion:#0066B1; --exito:#2d8a5f; --aviso:#b8862b; --error:#c0432f;
+  --inmo:#2a8478; --visita:#a8547a; --cita:#5b5bd6; --nota:#8b6fbf; --sistema:#9aa4b8;
+  /* la franja del teclado y los bordes del teléfono · §4 de los cimientos */
+  --arriba:env(safe-area-inset-top,0px);
+  --abajo:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;position:fixed;inset:0;width:100%;overflow:hidden;overscroll-behavior:none;}
+/* Que se sienta APP, no un enlace de Safari: ni zoom, ni resaltado azul al
+   tocar, ni menú de mantener-pulsado, ni selección de texto en la interfaz, ni
+   doble-tap para ampliar. La selección se devuelve donde hace falta (campos). */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body{
+  font-family:'IBM Plex Sans',system-ui,sans-serif;font-feature-settings:"ss01","kern";
+  background:var(--canvas);color:var(--tinta);-webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}
+#cuerpo{overscroll-behavior:none;}
+button{font-family:inherit;cursor:pointer;color:inherit;background:none;border:none;
+  transition:transform 160ms cubic-bezier(.23,1,.32,1),background 160ms,border-color 160ms;}
+button:active{transform:scale(.97);}          /* ley L6 */
+.serif{font-family:'IBM Plex Serif',Georgia,serif;}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--navy);}
+.eyebrow.faint{color:var(--tenue);}
+.rubrica{font-family:'IBM Plex Serif',Georgia,serif;font-style:italic;font-weight:500;font-size:15px;color:var(--navy);flex-shrink:0;}
+
+/* ── el armazón: cabecera fija · cuerpo con scroll · barra abajo ──────────── */
+#app{display:flex;flex-direction:column;height:100dvh;}
+#cab{background:var(--papel);border-bottom:1px solid var(--filete);flex-shrink:0;
+     padding:calc(var(--arriba) + 14px) 18px 13px;}
+#cuerpo{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 10px;
+        display:flex;flex-direction:column;gap:14px;}
+/* En un contenedor flex con scroll, un hijo con overflow:hidden (las .tarjeta)
+   puede encogerse a 0 por spec y recortar su contenido en vez de desbordar.
+   Pasaba en el listado de clientes: 49 filas aplastadas en una pantalla sin
+   poder deslizar. Los hijos directos mantienen su alto natural y deja que
+   #cuerpo sea quien scrollea. */
+#cuerpo>*{flex-shrink:0;}
+#barra{background:var(--papel);border-top:1px solid var(--filete);flex-shrink:0;
+       padding:7px 12px calc(var(--abajo) + 10px);display:flex;justify-content:space-between;align-items:flex-end;}
+.nav{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:56px;padding:6px 0;color:var(--suave);}
+.nav.on{color:var(--accion);} .nav.on span{font-weight:500;}
+.nav span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;}
+.nav-capturar{width:50px;height:50px;border-radius:0;background:var(--accion);color:#fff;
+  display:flex;align-items:center;justify-content:center;margin-bottom:4px;box-shadow:0 6px 16px rgba(0,102,177,.28);}
+
+/* ── piezas del mock ──────────────────────────────────────────────────────── */
+.tarjeta{background:var(--sup);border:1px solid var(--borde);border-radius:0;}
+.sombra{box-shadow:0 3px 12px rgba(25,37,113,.09);}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:0;font-size:11px;font-weight:500;}
+.punto{width:7px;height:7px;border-radius:0;}
+.b-primario{height:48px;border-radius:0;background:var(--accion);color:#fff;font-size:15px;font-weight:500;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+.b-secundario{height:48px;border:1px solid var(--boton);border-radius:0;background:none;font-size:14px;font-weight:500;color:var(--tinta);}
+.b-chico{height:38px;padding:0 14px;border:1px solid var(--boton);border-radius:0;background:none;font-size:13px;font-weight:500;color:var(--accion);}
+.fila{display:flex;align-items:center;gap:12px;padding:13px 14px;min-height:52px;}
+.fila+.fila{border-top:1px solid var(--sep);}
+.hora{font-family:'IBM Plex Mono',monospace;font-size:13.5px;width:42px;flex-shrink:0;color:rgba(22,33,62,.75);}
+.acceso{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:56px;}
+.acceso i{width:44px;height:44px;border-radius:50%;background:#eef3fa;color:var(--accion);
+  display:flex;align-items:center;justify-content:center;}
+.acceso.destacado i{background:var(--accion);color:#fff;}
+.acceso b{font-size:11.5px;font-weight:400;color:rgba(22,33,62,.7);}
+.acceso.destacado b{color:var(--tinta);font-weight:500;}
+svg{display:block;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="cab"></div>
+  <div id="cuerpo"></div>
+  <div id="barra"></div>
+</div>
+
+<script src="../../shared/aj-core.js"></script>
+<!-- Deploy de pruebas: arranca en LABORATORIO por defecto — nunca datos reales sin elegirlo a mano.
+     Solo en el deploy publico (github.io); localhost y el CRM de escritorio siguen en produccion. -->
+<script>(function(){try{
+  if(/github\.io$/.test(location.hostname) && !localStorage.getItem('aj_entorno')){
+    localStorage.setItem('aj_entorno','laboratorio');
+  }
+}catch(e){}})();</script>
+<script src="../../shared/supabase-config.js"></script>
+<script src="../../shared/aj-finanzas.js"></script>
+<script src="../../shared/aj-remote.js"></script>
+<script src="../../shared/aj-sync.js"></script>
+<script src="app-datos.js"></script>
+<script src="app-inicio.js"></script>
+<script src="app-agenda.js"></script>
+<script src="app-cliente.js"></script>
+<script src="app-capturar.js"></script>
+<script src="app-escaner.js"></script>
+<script src="app-buscar.js"></script>
+<script src="app-mas.js"></script>
+<script src="app-cuadre.js"></script>
+<script src="app-login.js"></script>
+<script src="app-shell.js"></script>
+</body>
+</html>
